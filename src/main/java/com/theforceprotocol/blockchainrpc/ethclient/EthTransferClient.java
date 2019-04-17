@@ -4,16 +4,17 @@ import com.theforceprotocol.blockchainrpc.TransactionRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.web3j.abi.FunctionEncoder;
+import org.web3j.abi.datatypes.Address;
+import org.web3j.abi.datatypes.Bool;
+import org.web3j.abi.datatypes.Function;
 import org.web3j.abi.datatypes.generated.Uint256;
 import org.web3j.crypto.Credentials;
 import org.web3j.crypto.RawTransaction;
 import org.web3j.crypto.TransactionEncoder;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.DefaultBlockParameterName;
-import org.web3j.protocol.core.methods.response.EthGasPrice;
 import org.web3j.protocol.core.methods.response.EthGetTransactionCount;
 import org.web3j.protocol.core.methods.response.EthSendTransaction;
-import org.web3j.tx.RawTransactionManager;
 import org.web3j.tx.Transfer;
 import org.web3j.tx.gas.DefaultGasProvider;
 import org.web3j.utils.Convert;
@@ -21,11 +22,7 @@ import org.web3j.utils.Numeric;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-
-import org.web3j.abi.datatypes.*;
-
 import java.util.Arrays;
-import java.util.List;
 
 /**
  * ETH转账
@@ -37,6 +34,7 @@ public class EthTransferClient {
     private static Logger logger = LoggerFactory.getLogger(EthTransferClient.class);
     private static Web3j web3j = Web3JClient.getClient();
     private final static String PRIVATE_KEY = "";
+    private final static String AIRDROP_CONTRACT_ADDRESS = "";
     private static EthTransferClient ethInstance;
 
     public static EthTransferClient EthInstance() {
@@ -118,7 +116,19 @@ public class EthTransferClient {
         return TransactionRecord.success(transactionHash);
     }
 
+    public TransactionRecord transferERC20(String toAddress, String amount) throws Exception {
+        return transferERC20(PRIVATE_KEY, toAddress, AIRDROP_CONTRACT_ADDRESS, amount);
+    }
+
     private TransactionRecord sendERC20(Credentials credentials, String contractAddress, String toAddress, BigDecimal value) throws Exception {
+        if (contractAddress  == null || contractAddress.isEmpty()) {
+            throw new Exception("contract is null or empty!");
+        }
+
+        if (toAddress == null || toAddress.isEmpty()) {
+            throw new Exception("toAddress is null or empty!");
+        }
+
         Convert.Unit unit = Convert.Unit.ETHER;
         String tokenValue = String.valueOf(value);
         BigDecimal weiValue = Convert.toWei(tokenValue, unit);
