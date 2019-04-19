@@ -31,7 +31,6 @@ public class AccountHelper {
     public String[] newAccount() throws Exception {
         ECKeyPair keyPair = Keys.createEcKeyPair();
         String[] tuple = getAccountTuple(keyPair);
-        logAccount(tuple);
         return tuple;
     }
 

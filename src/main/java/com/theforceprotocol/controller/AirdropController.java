@@ -1,6 +1,7 @@
 package com.theforceprotocol.controller;
 
 import com.theforceprotocol.blockchainrpc.TransactionRecord;
+import com.theforceprotocol.blockchainrpc.ethclient.AccountHelper;
 import com.theforceprotocol.blockchainrpc.ethclient.EthTransferClient;
 import com.theforceprotocol.repository.AirdropRepository;
 import com.theforceprotocol.repository.AirdropResultRepository;
@@ -14,7 +15,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Controller
 @RequestMapping(path = "/airdrop")
@@ -64,5 +67,19 @@ public class AirdropController {
         }
 
         return trs;
+    }
+
+    @GetMapping(path="/ethkeygen")
+    public @ResponseBody List<Map<String, String>> keyGen(@RequestParam String cnt) throws Exception {
+        List<Map<String, String>> result = new ArrayList<>();
+        for (int i = 0; i < Integer.parseInt(cnt); i++) {
+            AccountHelper accountHelper = new AccountHelper();
+            String[] tuple = accountHelper.newAccount();
+            Map<String, String> one = new HashMap<>();
+            one.put("PrivateKey", tuple[0]);
+            one.put("Address", "0x"+tuple[2]);
+            result.add(one);
+        }
+        return result;
     }
 }
