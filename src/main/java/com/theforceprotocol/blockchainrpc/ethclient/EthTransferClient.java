@@ -70,6 +70,17 @@ public class EthTransferClient {
         }
     }
 
+    public TransactionRecord transferERC20ByNonce(String fromPrivateKey, String toAddress, String contractAddress, String amount, BigInteger Nonce) {
+        Credentials credentials = Credentials.create(fromPrivateKey);
+        BigDecimal value = new BigDecimal(amount);
+        try {
+            return sendERC20ByNonce(credentials, contractAddress, toAddress, value, Nonce);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return TransactionRecord.fail();
+        }
+    }
+
     public static String encodeTransferData(String toAddress, BigInteger sum) {
         Function function = new Function(
                 "transfer",  // function we're calling
@@ -120,7 +131,20 @@ public class EthTransferClient {
         return transferERC20(PRIVATE_KEY, toAddress, AIRDROP_CONTRACT_ADDRESS, amount);
     }
 
-    private TransactionRecord sendERC20(Credentials credentials, String contractAddress, String toAddress, BigDecimal value) throws Exception {
+    public TransactionRecord transferERC20ByNonce(String toAddress, String amount, BigInteger Nonce) throws Exception {
+        return transferERC20ByNonce(PRIVATE_KEY, toAddress, AIRDROP_CONTRACT_ADDRESS, amount, Nonce);
+    }
+
+    public  BigInteger getAddressNonce() throws Exception {
+        Credentials credentials = Credentials.create(PRIVATE_KEY);
+        EthGetTransactionCount ethGetTransactionCount = web3j.ethGetTransactionCount(credentials.getAddress(), DefaultBlockParameterName.LATEST).sendAsync().get();
+        BigInteger nonce = ethGetTransactionCount.getTransactionCount();
+        System.out.println("Nonce:" + nonce);
+
+        return nonce;
+    }
+
+    private TransactionRecord sendERC20ByNonce(Credentials credentials, String contractAddress, String toAddress, BigDecimal value, BigInteger nonce) throws Exception {
         if (contractAddress  == null || contractAddress.isEmpty()) {
             throw new Exception("contract is null or empty!");
         }
@@ -137,12 +161,11 @@ public class EthTransferClient {
                     "Non decimal Wei value provided: " + tokenValue + " " + unit.toString()
                             + " = " + weiValue + " Wei");
         }
-        EthGetTransactionCount ethGetTransactionCount = web3j.ethGetTransactionCount(credentials.getAddress(), DefaultBlockParameterName.LATEST).sendAsync().get();
-        BigInteger nonce = ethGetTransactionCount.getTransactionCount();
-        System.out.println("nonce:" + nonce);
+        System.out.println("Nonce:" + nonce);
         BigInteger sum = value.toBigIntegerExact(); // amount you want to send
+
         String data = encodeTransferData(toAddress, sum);
-        BigInteger gasLimit = BigInteger.valueOf(120000); // set gas limit here
+        BigInteger gasLimit = BigInteger.valueOf(60000); // set gas limit here
         RawTransaction rawTransaction = RawTransaction.createTransaction(nonce, DefaultGasProvider.GAS_PRICE, gasLimit, contractAddress, data);
 
         byte[] signedMessage = TransactionEncoder.signMessage(rawTransaction, credentials);
@@ -169,4 +192,9 @@ public class EthTransferClient {
         return TransactionRecord.success(transactionHash);
     }
 
+    private TransactionRecord sendERC20(Credentials credentials, String contractAddress, String toAddress, BigDecimal value) throws Exception {
+        EthGetTransactionCount ethGetTransactionCount = web3j.ethGetTransactionCount(credentials.getAddress(), DefaultBlockParameterName.LATEST).sendAsync().get();
+        BigInteger nonce = ethGetTransactionCount.getTransactionCount();
+        return sendERC20ByNonce(credentials, contractAddress, toAddress, value, nonce);
+    }
 }
